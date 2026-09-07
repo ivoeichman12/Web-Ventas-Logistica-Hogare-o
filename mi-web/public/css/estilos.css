@@ -1,0 +1,567 @@
+/* ============================================================
+   LOGÍSTICA HOGAREÑO — Diseño corporativo claro
+   Tipo Notion / Linear: fondo claro, tarjetas sutiles, azul de
+   marca, mucho aire. Tipografía Inter.
+   ============================================================ */
+
+:root {
+    /* Superficies y fondo */
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --border: #e6e9f0;
+    --border-strong: #d5dbe6;
+
+    /* Texto */
+    --texto: #0f172a;
+    --texto-muted: #64748b;
+
+    /* Marca */
+    --brand: #2563eb;
+    --brand-hover: #1d4ed8;
+    --brand-soft: #eef4ff;
+
+    /* Semánticos */
+    --verde-drive: #16a34a;
+    --error: #dc2626;
+    --neutro: #d97706;
+
+    /* Sombras y radios */
+    --sombra-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --sombra: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --sombra-md: 0 6px 16px rgba(16, 24, 40, 0.08);
+    --sombra-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
+    --radio: 14px;
+    --radio-sm: 9px;
+
+    /* Compatibilidad con estilos/HTML previos que usan estos nombres */
+    --azul-vibrante: var(--brand);
+    --azul-light: #1e3a8a;
+    --azul-deep: #0f172a;
+    --blanco: #ffffff;
+    --surface-old: var(--surface);
+}
+
+/* ============================================================
+   TEMA OSCURO — se activa con data-tema="oscuro" en <html>.
+   Solo redefine los tokens de color; el resto del CSS los usa.
+   ============================================================ */
+:root[data-tema="oscuro"] {
+    --bg: #0b1220;
+    --surface: #141d30;
+    --surface-2: #1c2740;
+    --border: #26314a;
+    --border-strong: #3a4763;
+
+    --texto: #e8edf5;
+    --texto-muted: #94a3b8;
+
+    --brand: #3b82f6;
+    --brand-hover: #60a5fa;
+    --brand-soft: rgba(59, 130, 246, 0.18);
+
+    --sombra-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --sombra: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --sombra-md: 0 6px 16px rgba(0, 0, 0, 0.4);
+    --sombra-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+    --azul-deep: #e8edf5;
+}
+:root[data-tema="oscuro"] #login-screen { background: linear-gradient(160deg, #0b1220 0%, #131c2e 60%, #0b1220 100%); }
+/* Chips de interés: versión legible sobre fondo oscuro */
+:root[data-tema="oscuro"] .tag-si { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+:root[data-tema="oscuro"] .tag-no { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+:root[data-tema="oscuro"] .tag-neutro { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+/* Botón peligroso en oscuro */
+:root[data-tema="oscuro"] .btn-danger { background: rgba(239, 68, 68, 0.14); color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
+:root[data-tema="oscuro"] .btn-danger:hover { background: rgba(239, 68, 68, 0.24); color: #fca5a5; border-color: var(--error); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* En los elementos que se tocan (tarjetas, barras, botones, nav) evitamos que
+   el click seleccione el texto o muestre el cursor de escritura: queda feo.
+   El texto de lectura (detalles, observaciones) sí se puede seleccionar. */
+.dash-num-click, .dash-barra-click, .btn-option, .nav-link, .tema-toggle,
+.visita-card, .card-prospecto, .r-item-row, .hamburguesa, button, .dash-ver {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--texto);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+}
+
+h1, h2, h3, h4 { color: var(--texto); font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.05rem; }
+
+/* ============================================================
+   NAVEGACIÓN — Sidebar (menú lateral) + barra superior en mobile
+   ============================================================ */
+
+/* Barra superior: oculta en desktop, visible en celular */
+.topbar {
+    display: none; align-items: center; gap: 12px;
+    height: 54px; padding: 0 14px; background: var(--surface);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 900;
+}
+.hamburguesa {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--texto);
+    line-height: 1; padding: 4px 9px; border-radius: var(--radio-sm);
+}
+.hamburguesa:hover { background: var(--surface-2); }
+.topbar-titulo { font-weight: 700; font-size: 0.95rem; }
+/* Logo de la barra superior (celular). Va sobre fondo blanco para que la
+   parte oscura del logo se lea también en tema oscuro. */
+.topbar-logo {
+    height: 26px; width: auto; display: block;
+    background: #fff; border-radius: 7px; padding: 5px 9px;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; width: 236px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    padding: 18px 14px; z-index: 2000; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.sidebar-marca { padding: 4px 4px 16px; }
+.sidebar-marca img {
+    width: 100%; display: block; background: #fff;
+    border-radius: 10px; padding: 10px 12px; box-shadow: var(--sombra-sm);
+}
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.sidebar-separador { height: 1px; background: var(--border); margin: 10px 6px; margin-top: auto; }
+
+.nav-link {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    font-size: 0.9rem; color: var(--texto-muted);
+    cursor: pointer; border: none; background: none; padding: 11px 12px;
+    font-weight: 600; border-radius: var(--radio-sm); transition: 0.15s ease;
+}
+.nav-link:hover { background: var(--surface-2); color: var(--texto); }
+.nav-link.active { color: var(--brand); background: var(--brand-soft); }
+.nav-link .nav-icon { font-size: 1.15rem; width: 22px; text-align: center; }
+
+/* Fondo oscuro detrás del menú (solo mobile, cuando está abierto) */
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 1500; }
+
+/* Interruptor deslizante de tema claro/oscuro */
+.tema-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; padding: 11px 12px; background: none; border: none; cursor: pointer;
+    border-radius: var(--radio-sm); color: var(--texto-muted); font-weight: 600;
+    font-size: 0.9rem; transition: 0.15s ease;
+}
+.tema-toggle:hover { background: var(--surface-2); color: var(--texto); }
+.tema-txt { display: flex; align-items: center; gap: 12px; }
+.tema-txt .nav-icon { font-size: 1.15rem; width: 22px; text-align: center; }
+.switch {
+    position: relative; width: 46px; height: 26px; border-radius: 999px;
+    background: var(--border-strong); transition: background 0.2s ease; flex-shrink: 0;
+}
+.switch-knob {
+    position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; box-shadow: var(--sombra-sm);
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    transition: transform 0.2s ease;
+}
+:root[data-tema="oscuro"] .switch { background: var(--brand); }
+:root[data-tema="oscuro"] .switch-knob { transform: translateX(20px); }
+
+main { margin-left: 236px; padding: 30px 34px; }
+main > .view-section { max-width: 1180px; }
+.view-section { display: none; animation: fadeIn 0.25s ease; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ============================================================
+   PANELES / TARJETAS
+   ============================================================ */
+.glass-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 22px; border-radius: var(--radio); margin-bottom: 22px;
+    box-shadow: var(--sombra);
+}
+
+/* ============================================================
+   FORMULARIOS
+   ============================================================ */
+input, select, textarea {
+    width: 100%; padding: 12px 14px; background: var(--surface);
+    border: 1px solid var(--border-strong); border-radius: var(--radio-sm);
+    color: var(--texto); outline: none; margin-bottom: 12px; font-size: 15px;
+    font-family: inherit; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input::placeholder, textarea::placeholder { color: #9aa4b2; }
+input:focus, select:focus, textarea:focus {
+    border-color: var(--brand); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+select { cursor: pointer; }
+input[type="date"] { font-weight: 600; cursor: pointer; }
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.btn-calc {
+    background: var(--brand); color: #fff; padding: 13px 18px; border-radius: var(--radio-sm);
+    font-weight: 600; width: 100%; cursor: pointer; border: none; font-size: 0.9rem;
+    transition: 0.15s ease; box-shadow: var(--sombra-sm);
+}
+.btn-calc:hover { background: var(--brand-hover); }
+.btn-calc:active { transform: translateY(1px); }
+
+.btn-sec {
+    background: var(--surface); color: var(--texto); padding: 10px 14px; font-size: 0.78rem;
+    border-radius: var(--radio-sm); border: 1px solid var(--border-strong); cursor: pointer;
+    font-weight: 600; transition: 0.15s ease;
+}
+.btn-sec:hover { background: var(--surface-2); border-color: var(--brand); color: var(--brand); }
+
+.btn-danger { background: #fef2f2; color: var(--error); border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; border-color: var(--error); color: var(--error); }
+
+/* ============================================================
+   SELECTORES (grupos de opciones tipo "chips")
+   ============================================================ */
+.selector-label {
+    font-size: 0.72rem; color: var(--texto-muted); text-transform: uppercase;
+    margin-bottom: 8px; display: block; letter-spacing: 0.05em; font-weight: 700;
+    text-align: center;
+}
+.selector-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.btn-option {
+    flex: 1; min-width: 80px; padding: 11px 6px; background: var(--surface);
+    border: 1px solid var(--border-strong); color: var(--texto-muted); border-radius: var(--radio-sm);
+    cursor: pointer; font-size: 0.72rem; font-weight: 600; text-align: center; transition: 0.15s ease;
+}
+.btn-option:hover { border-color: var(--brand); color: var(--brand); }
+.btn-option.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+.btn-si.active { background: var(--verde-drive); border-color: var(--verde-drive); }
+.btn-no.active { background: var(--error); border-color: var(--error); }
+.btn-neutro.active { background: var(--neutro); border-color: var(--neutro); }
+
+/* ============================================================
+   REGISTRO DE VISITAS (split)
+   ============================================================ */
+.visitas-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; }
+@media (max-width: 850px) { .visitas-split { grid-template-columns: 1fr; } }
+
+.visita-card, .card-prospecto {
+    position: relative; background: var(--surface); padding: 16px;
+    border-radius: var(--radio); border: 1px solid var(--border); border-left: 3px solid var(--brand);
+    margin-bottom: 12px; cursor: pointer; transition: 0.18s ease; box-shadow: var(--sombra);
+}
+.visita-card:hover, .card-prospecto:hover {
+    transform: translateY(-2px); box-shadow: var(--sombra-md); border-left-color: var(--brand-hover);
+}
+.tag-v {
+    font-size: 0.66rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+    margin-right: 5px; display: inline-block; margin-top: 6px;
+    background: var(--surface-2); color: var(--texto-muted); border: 1px solid var(--border);
+}
+.tag-zona { background: var(--brand-soft); color: var(--brand); border-color: transparent; }
+.tag-si { background: #dcfce7; color: #15803d; border-color: transparent; }
+.tag-no { background: #fee2e2; color: #b91c1c; border-color: transparent; }
+.tag-neutro { background: #fef3c7; color: #b45309; border-color: transparent; }
+.vendedor-tag {
+    font-size: 0.68rem; font-weight: 700; color: var(--brand); text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 6px; display: block;
+}
+
+/* Badge de estado del prospecto (embudo) */
+.badge-estado {
+    display: inline-block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; margin-bottom: 8px;
+}
+.estado-nuevo { background: #e2e8f0; color: #475569; }
+.estado-contactado { background: #dbeafe; color: #1d4ed8; }
+.estado-negociacion { background: #fef3c7; color: #b45309; }
+.estado-cerrado { background: #dcfce7; color: #15803d; }
+:root[data-tema="oscuro"] .estado-nuevo { background: rgba(148,163,184,0.2); color: #cbd5e1; }
+:root[data-tema="oscuro"] .estado-contactado { background: rgba(59,130,246,0.2); color: #93c5fd; }
+:root[data-tema="oscuro"] .estado-negociacion { background: rgba(245,158,11,0.2); color: #fcd34d; }
+:root[data-tema="oscuro"] .estado-cerrado { background: rgba(34,197,94,0.2); color: #86efac; }
+
+/* Badge de resultado de la visita */
+.resultado-pendiente { background: #e2e8f0; color: #475569; }
+.resultado-cerrado { background: #dcfce7; color: #15803d; }
+.resultado-perdido { background: #fee2e2; color: #b91c1c; }
+.resultado-seguir { background: #dbeafe; color: #1d4ed8; }
+:root[data-tema="oscuro"] .resultado-pendiente { background: rgba(148,163,184,0.2); color: #cbd5e1; }
+:root[data-tema="oscuro"] .resultado-cerrado { background: rgba(34,197,94,0.2); color: #86efac; }
+:root[data-tema="oscuro"] .resultado-perdido { background: rgba(239,68,68,0.2); color: #fca5a5; }
+:root[data-tema="oscuro"] .resultado-seguir { background: rgba(59,130,246,0.2); color: #93c5fd; }
+
+/* ============================================================
+   RE-ATAQUES (recuperar clientes perdidos)
+   ============================================================ */
+.reataque-card { border-left: 3px solid var(--error); }
+.reataque-motivo {
+    font-size: 0.78rem; color: var(--texto); margin-top: 8px;
+    background: var(--surface-2); border-radius: var(--radio-sm); padding: 7px 10px;
+}
+.btn-reataque {
+    display: block; width: 100%; margin-top: 12px; padding: 10px;
+    background: var(--brand); color: #fff; border: none; border-radius: var(--radio-sm);
+    font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: filter 0.15s ease;
+}
+.btn-reataque:hover { filter: brightness(1.08); }
+
+/* ============================================================
+   FACTURACIÓN
+   ============================================================ */
+.fact-controles { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+.fact-campo { display: flex; flex-direction: column; }
+.fact-campo .selector-label { margin-bottom: 4px; }
+.fact-campo input { margin: 0; width: auto; min-width: 150px; padding: 9px 11px; }
+.fact-resultado {
+    background: var(--brand-soft); border: 1px solid var(--border);
+    border-radius: var(--radio); padding: 26px; margin-bottom: 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+}
+.fact-resultado-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: var(--texto-muted); }
+.fact-monto { font-size: 2.6rem; font-weight: 800; color: var(--brand); letter-spacing: -0.02em; line-height: 1.1; }
+.fact-periodo { font-size: 0.8rem; color: var(--texto-muted); font-weight: 600; }
+
+/* ============================================================
+   DASHBOARD / RESUMEN
+   ============================================================ */
+.dash-numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.dash-num {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radio);
+    padding: 18px; display: flex; flex-direction: column; gap: 3px; box-shadow: var(--sombra);
+}
+.dash-num-click { cursor: pointer; transition: border-color 0.15s ease, transform 0.15s ease; }
+.dash-num-click:hover { border-color: var(--brand); transform: translateY(-2px); }
+.dash-num-icono { font-size: 1.3rem; }
+
+/* Selector de motivo de pérdida */
+.motivo-lista { display: flex; flex-direction: column; gap: 8px; }
+.motivo-opcion {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 13px 14px; background: var(--surface); color: var(--texto);
+    border: 1px solid var(--border-strong); border-radius: var(--radio-sm);
+    font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: 0.15s ease;
+}
+.motivo-opcion:hover { border-color: var(--error); background: var(--surface-2); color: var(--error); }
+.motivo-icono { font-size: 1.1rem; }
+
+/* Desglose por vendedor (dentro del modal) */
+.desglose-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.desglose-grid > div { display: flex; flex-direction: column; }
+.desglose-num { font-size: 1.4rem; font-weight: 800; color: var(--texto); line-height: 1.1; }
+.desglose-lbl { font-size: 0.62rem; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.dash-num-valor { font-size: 1.9rem; font-weight: 800; color: var(--texto); letter-spacing: -0.02em; }
+.dash-num-etiqueta { font-size: 0.7rem; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.dash-num-sub { font-size: 0.72rem; color: var(--brand); font-weight: 700; margin-top: 2px; }
+.dash-num-porc { font-size: 0.85rem; color: var(--texto-muted); font-weight: 700; letter-spacing: 0; }
+
+/* Total del panel de barras (chiquito, arriba a la derecha) */
+.dash-barras-total { text-align: right; font-size: 0.72rem; color: var(--texto-muted); font-weight: 700; margin-bottom: 10px; }
+
+/* Barra de zona: largo = volumen; el tramo verde = clientes cerrados */
+.dash-zona-fill { background: var(--brand); display: flex; overflow: hidden; }
+.dash-zona-cerr { height: 100%; background: #22c55e; }
+.dash-zona-sub { font-size: 0.7rem; color: var(--texto-muted); font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+.dash-zona-sub .dot-cerr { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; display: inline-block; flex-shrink: 0; }
+
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+.dash-barra { margin-bottom: 13px; }
+.dash-barra:last-child { margin-bottom: 0; }
+.dash-barra-click { cursor: pointer; border-radius: var(--radio-sm); padding: 6px 8px; margin: 0 -8px 8px; transition: background 0.15s ease; }
+.dash-barra-click:hover { background: var(--surface-2); }
+.dash-ver { font-size: 0.66rem; color: var(--brand); font-weight: 700; }
+.dash-barra-top { display: flex; justify-content: space-between; gap: 10px; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px; color: var(--texto); }
+.dash-barra-track { height: 9px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.dash-barra-fill { height: 100%; background: var(--brand); border-radius: 999px; transition: width 0.5s ease; min-width: 3px; }
+.fill-estado-nuevo { background: #94a3b8; }
+.fill-estado-contactado { background: #3b82f6; }
+.fill-estado-negociacion { background: #f59e0b; }
+.fill-estado-cerrado { background: #22c55e; }
+.fill-si { background: #22c55e; }
+.fill-neutro { background: #f59e0b; }
+.fill-no { background: #ef4444; }
+.fill-resultado-pendiente { background: #94a3b8; }
+.fill-resultado-cerrado { background: #22c55e; }
+.fill-resultado-perdido { background: #ef4444; }
+.fill-resultado-seguir { background: #3b82f6; }
+
+/* ============================================================
+   GRILLA DE PROSPECTOS
+   ============================================================ */
+.grid-prospectos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card-prospecto { padding: 20px; }
+.card-prospecto h3 { color: var(--texto); margin-bottom: 8px; }
+.card-prospecto p { color: var(--texto-muted); font-size: 0.85rem; margin-bottom: 4px; }
+
+/* ============================================================
+   PANEL DE RUTEO
+   ============================================================ */
+.ruteo-control-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 22px; border-radius: var(--radio); margin-bottom: 20px; box-shadow: var(--sombra);
+}
+.ruteo-grid-filtros { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.ruteo-action-bar {
+    display: flex; gap: 15px; align-items: flex-end; background: var(--brand-soft);
+    padding: 16px; border-radius: var(--radio-sm); flex-wrap: wrap;
+}
+
+.r-tabla-container {
+    background: var(--surface); border-radius: var(--radio);
+    border: 1px solid var(--border); overflow: hidden; box-shadow: var(--sombra);
+}
+.r-item-row {
+    display: grid; grid-template-columns: 50px 2fr 1fr 1fr 1fr; align-items: center;
+    padding: 13px 16px; border-bottom: 1px solid var(--border); transition: 0.12s ease; cursor: pointer;
+}
+.r-item-row:last-child { border-bottom: none; }
+.r-item-row:not(.header):hover { background: var(--surface-2); }
+.r-item-row.header {
+    background: var(--surface-2); font-weight: 700; text-transform: uppercase;
+    font-size: 0.66rem; color: var(--texto-muted); letter-spacing: 0.04em;
+}
+.r-checkbox, .r-check { width: 19px; height: 19px; accent-color: var(--brand); cursor: pointer; }
+.r-label { display: none; }
+
+/* ============================================================
+   MODALES
+   ============================================================ */
+.modal {
+    display: none; position: fixed; inset: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(3px);
+    z-index: 10000; overflow-y: auto; padding: 16px;
+}
+.modal-content {
+    background: var(--surface); border: 1px solid var(--border); padding: 26px;
+    border-radius: var(--radio); width: 100%; max-width: 550px; margin: auto;
+    box-shadow: var(--sombra-lg);
+}
+.info-row {
+    display: flex; justify-content: space-between; padding: 11px 0;
+    border-bottom: 1px solid var(--border); font-size: 0.9rem; align-items: center; gap: 12px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-label { color: var(--texto-muted); font-weight: 700; text-transform: uppercase; font-size: 0.64rem; min-width: 110px; letter-spacing: 0.04em; }
+.info-val-input {
+    background: var(--surface); border: 1px solid var(--border-strong); color: var(--texto);
+    padding: 7px 10px; border-radius: var(--radio-sm); width: 60%; text-align: right; font-size: 0.9rem; margin: 0;
+}
+
+/* ============================================================
+   MI AGENDA
+   ============================================================ */
+.agenda-card {
+    background: var(--surface); padding: 20px; border-radius: var(--radio);
+    margin-bottom: 14px; border: 1px solid var(--border); border-left: 4px solid var(--brand);
+    box-shadow: var(--sombra);
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+#login-screen {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    background: linear-gradient(160deg, #eef2ff 0%, #f4f6fb 55%, #e0e7ff 100%);
+    z-index: 20000; display: flex; justify-content: center; align-items: center; padding: 20px;
+}
+
+/* Pantalla de carga posterior al login */
+#loading-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 15000; display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+.loading-box { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+.loading-box p { color: var(--texto-muted); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.02em; }
+
+/* Logo con efecto de "llenado": una copia apagada de fondo y una a color
+   que se revela de izquierda a derecha en bucle. */
+.loading-logo-wrap { position: relative; width: min(300px, 74vw); }
+.loading-logo-wrap img { width: 100%; display: block; }
+.loading-logo-base { filter: grayscale(1); opacity: 0.2; }
+.loading-logo-fill { position: absolute; inset: 0; animation: llenarLogo 2s ease-in-out infinite; }
+@keyframes llenarLogo {
+    0%   { clip-path: inset(0 100% 0 0); opacity: 1; }
+    65%  { clip-path: inset(0 0 0 0); opacity: 1; }
+    82%  { clip-path: inset(0 0 0 0); opacity: 1; }
+    100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+#login-screen .glass-panel { box-shadow: var(--sombra-lg); padding: 32px 28px; }
+#login-screen h2 { color: var(--brand); letter-spacing: -0.02em; }
+
+/* ============================================================
+   ESTADOS VACÍOS
+   ============================================================ */
+.estado-vacio { text-align: center; color: var(--texto-muted); padding: 48px 20px; font-size: 0.9rem; grid-column: 1 / -1; }
+
+/* ============================================================
+   ESTADOS DE CARGA (spinners)
+   ============================================================ */
+.spinner {
+    display: inline-block; width: 14px; height: 14px; margin-right: 8px;
+    border: 2px solid currentColor; border-top-color: transparent;
+    border-radius: 50%; animation: girar 0.7s linear infinite; vertical-align: middle; opacity: 0.9;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+button.cargando { opacity: 0.7; cursor: wait; pointer-events: none; }
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+#toast-contenedor {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 30000; display: flex; flex-direction: column; gap: 10px; align-items: center;
+    width: 100%; padding: 0 15px; pointer-events: none;
+}
+.toast {
+    display: flex; align-items: center; gap: 9px; max-width: 420px;
+    background: #0f172a; color: #fff; padding: 13px 18px; border-radius: var(--radio-sm);
+    border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: var(--sombra-lg);
+    font-size: 0.85rem; font-weight: 600;
+    opacity: 0; transform: translateY(10px); transition: 0.25s ease;
+}
+.toast-visible { opacity: 1; transform: translateY(0); }
+.toast-exito { border-left: 3px solid var(--verde-drive); }
+.toast-error { border-left: 3px solid var(--error); }
+.toast-icono { font-size: 1rem; }
+
+/* ============================================================
+   MOBILE — barra inferior tipo app + tarjetas de ruteo
+   ============================================================ */
+@media (max-width: 850px) {
+    /* Barra superior visible; sidebar se convierte en cajón deslizable */
+    .topbar { display: flex; }
+    .sidebar {
+        transform: translateX(-100%); transition: transform 0.25s ease;
+        width: 264px; box-shadow: var(--sombra-lg);
+    }
+    .sidebar.abierto { transform: translateX(0); }
+    .sidebar-overlay.abierto { display: block; }
+
+    main { margin-left: 0; padding: 18px 16px 40px; }
+
+    .btn-calc, .btn-sec, .btn-option { min-height: 44px; }
+
+    .ruteo-grid-filtros { grid-template-columns: 1fr; }
+
+    .r-item-row.header { display: none; }
+    .r-item-row {
+        display: flex; flex-direction: column; gap: 8px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radio-sm); margin-bottom: 10px; padding: 14px;
+    }
+    .r-item-row:not(.header):hover { background: var(--surface); }
+    .r-check-cell { order: -1; }
+    .r-check, .r-checkbox { width: 24px; height: 24px; }
+    .r-label { display: inline-block; font-size: 0.6rem; text-transform: uppercase; color: var(--texto-muted); margin-right: 6px; font-weight: 700; }
+}

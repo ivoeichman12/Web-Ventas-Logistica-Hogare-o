@@ -1,0 +1,22 @@
+{
+  "name": "Logística Hogareño - Gestión Pro",
+  "short_name": "Log. Hogareño",
+  "description": "CRM de ventas y ruteo para el equipo de Logística Hogareño",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "Icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Icono.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

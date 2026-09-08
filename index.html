@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Logística Hogareño - Gestión Pro V39.0</title>
+
+    <link rel="icon" type="image/png" href="Logo.png">
+    <link rel="apple-touch-icon" href="Icono.png">
+
+    <!-- PWA: instalable en el celular -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- TIPOGRAFÍA -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- LIBRERÍA EXTERNA: lectura/escritura de Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- ESTILOS -->
+    <link rel="stylesheet" href="css/estilos.css">
+
+    <!-- Estilos del histórico mensual de Facturación -->
+    <style>
+        /* Precio "bloqueado": se ve como dato fijo, solo se edita si tocás el lápiz */
+        .fact-precio-row { display:flex; gap:8px; align-items:center; }
+        .fact-precio-row input { margin:0; flex:1; }
+        .fact-precio-row input[readonly] { background: var(--surface-2); color: var(--texto-muted); cursor:default; }
+        .fact-precio-editar { flex-shrink:0; padding:10px 12px; }
+
+        .fact-tabla { display:flex; flex-direction:column; gap:8px; }
+        .fact-fila { border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--surface-2); }
+        .fact-fila-header {
+            width:100%; display:grid; grid-template-columns: 1fr 1fr 1fr auto auto;
+            align-items:center; gap:10px; padding:12px 14px; background:none; border:none;
+            cursor:pointer; font:inherit; text-align:left; color:inherit;
+        }
+        .fact-fila-mes { font-weight:700; }
+        .fact-fila-clientes { color:var(--texto-muted); font-size:0.8rem; }
+        .fact-fila-monto { font-weight:700; color:var(--brand); text-align:right; }
+        .fact-fila-flecha { color:var(--texto-muted); font-size:0.75rem; text-align:right; }
+        .fact-fila-badge {
+            font-size:0.62rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;
+            padding:3px 9px; border-radius:999px; white-space:nowrap; text-align:center;
+        }
+        .fact-badge-confirmado { background:#dcfce7; color:#15803d; }
+        .fact-badge-parcial { background:#fef3c7; color:#b45309; }
+        .fact-badge-proyeccion { background:#e2e8f0; color:#475569; }
+        :root[data-tema="oscuro"] .fact-badge-confirmado { background:rgba(34,197,94,0.2); color:#86efac; }
+        :root[data-tema="oscuro"] .fact-badge-parcial { background:rgba(245,158,11,0.2); color:#fcd34d; }
+        :root[data-tema="oscuro"] .fact-badge-proyeccion { background:rgba(148,163,184,0.2); color:#cbd5e1; }
+
+        .fact-fila-detalle { padding:6px 14px 14px; border-top:1px solid var(--border); }
+        .fact-detalle-item { padding:10px 0; border-bottom:1px dashed var(--border); display:flex; flex-direction:column; gap:6px; }
+        .fact-detalle-item:last-child { border-bottom:none; }
+        .fact-detalle-top { display:flex; justify-content:space-between; gap:10px; font-size:0.82rem; flex-wrap:wrap; }
+        .fact-detalle-nombre { font-weight:600; }
+        .fact-detalle-dato { color:var(--texto-muted); }
+        .fact-detalle-bottom { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+        .fact-detalle-proy { font-size:0.76rem; color:var(--texto-muted); }
+        .fact-detalle-real-label { display:flex; align-items:center; gap:6px; font-size:0.76rem; color:var(--texto-muted); font-weight:600; }
+        .fact-monto-real-input { width:120px; margin:0; padding:6px 8px; font-size:0.8rem; }
+        @media (max-width: 640px) {
+            .fact-fila-header { grid-template-columns: 1fr auto; row-gap:4px; }
+            .fact-fila-clientes { grid-column: 1 / 2; }
+            .fact-fila-badge { grid-column: 1 / 2; justify-self:start; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA LOGIN -->
+    <div id="login-screen">
+        <div class="glass-panel" style="width: 100%; max-width: 350px; text-align:center;">
+            <h2 style="margin-bottom: 20px;">LOGÍSTICA HOGAREÑO</h2>
+            <input type="email" id="email-login" placeholder="Email">
+            <input type="password" id="pass-login" placeholder="Contraseña">
+            <button id="btn-login" onclick="accederConPassword()" class="btn-calc">Ingresar</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE CARGA (mientras traemos los datos después del login) -->
+    <div id="loading-screen" style="display:none;">
+        <div class="loading-box">
+            <div class="loading-logo-wrap">
+                <img src="Logo.png" alt="Logística Hogareño" class="loading-logo-base">
+                <img src="Logo.png" alt="" class="loading-logo-fill" aria-hidden="true">
+            </div>
+            <p>Cargando tus datos...</p>
+        </div>
+    </div>
+
+    <!-- INTERFAZ PRINCIPAL -->
+    <div id="app-interface" style="display:none;">
+        <!-- BARRA SUPERIOR (solo visible en celular) -->
+        <header class="topbar">
+            <button class="hamburguesa" onclick="alternarSidebar()" aria-label="Abrir menú">☰</button>
+            <img src="Logo-trim.png" alt="Logística Hogareño" class="topbar-logo">
+        </header>
+
+        <!-- MENÚ LATERAL (sidebar) -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-marca"><img src="Logo.png" alt="Logística Hogareño"></div>
+            <nav>
+                <button class="nav-link active" onclick="mostrarSeccion('dashboard-view', this)"><span class="nav-icon">📊</span><span class="nav-label">Panel de Control</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('prospectos-view', this)"><span class="nav-icon">🏠</span><span class="nav-label">Prospectos</span></button>
+                <button class="nav-link" id="nav-ruteo" style="display:none;" onclick="mostrarSeccion('ruteo-view', this)"><span class="nav-icon">📍</span><span class="nav-label">Ruteo Admin</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('visitas', this)"><span class="nav-icon">📝</span><span class="nav-label">Registrar Visita</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('reataques-view', this)"><span class="nav-icon">⚔️</span><span class="nav-label">Re-Ataques</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('facturacion-view', this)"><span class="nav-icon">💰</span><span class="nav-label">Facturación</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('agenda-view', this)"><span class="nav-icon">📅</span><span class="nav-label">Mi Agenda</span></button>
+                <button class="nav-link" onclick="mostrarSeccion('clientes', this)"><span class="nav-icon">👥</span><span class="nav-label">Clientes Activos</span></button>
+                <div class="sidebar-separador"></div>
+                <button class="tema-toggle" id="btn-tema" onclick="alternarTema()" role="switch" aria-label="Cambiar tema claro u oscuro">
+                    <span class="tema-txt"><span class="nav-icon">🎨</span><span id="label-tema">Modo claro</span></span>
+                    <span class="switch"><span class="switch-knob" id="icono-tema">☀️</span></span>
+                </button>
+                <button class="nav-link" onclick="confirmarSalida()"><span class="nav-icon">🚪</span><span class="nav-label">Salir</span></button>
+            </nav>
+        </aside>
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="cerrarSidebar()"></div>
+
+        <main>
+            <!-- DASHBOARD / RESUMEN -->
+            <section id="dashboard-view" class="view-section active">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                    <h2>📊 Panel de Control</h2>
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        <label style="font-size:0.7rem; color:var(--texto-muted); font-weight:700; text-transform:uppercase;">Desde</label>
+                        <input type="date" id="dash-desde" onchange="cargarDashboard()" style="width:auto; margin:0; padding:7px 9px; font-size:0.8rem;">
+                        <label style="font-size:0.7rem; color:var(--texto-muted); font-weight:700; text-transform:uppercase;">Hasta</label>
+                        <input type="date" id="dash-hasta" onchange="cargarDashboard()" style="width:auto; margin:0; padding:7px 9px; font-size:0.8rem;">
+                        <button onclick="dashEsteMes()" class="btn-sec">Este mes</button>
+                        <button onclick="dashHistorico()" class="btn-sec">Histórico</button>
+                        <button id="btn-presentacion" onclick="descargarPresentacion()" class="btn-sec" data-texto-cargando="Generando..." style="background:var(--brand); color:#fff; border-color:var(--brand);">📊 Presentación</button>
+                    </div>
+                </div>
+                <p id="dash-periodo" style="color:var(--texto-muted); font-size:0.8rem; margin-bottom:18px;"></p>
+                <div id="dash-numeros" class="dash-numeros"></div>
+                <h3 style="margin:18px 0 12px;">📦 Análisis de Tickets <span style="font-weight:500; color:var(--texto-muted); font-size:0.75rem;">(por empresa)</span></h3>
+                <div id="dash-envios" class="dash-numeros"></div>
+                <div class="dash-grid">
+                    <div class="glass-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                            <h3>Resultado de las visitas</h3>
+                            <select id="dash-resultado-vendedor" onchange="renderResultadoDashboard()" style="width:auto; margin:0; padding:6px 10px; font-size:0.8rem;">
+                                <option value="Todos">Todos los vendedores</option>
+                            </select>
+                        </div>
+                        <div id="dash-resultados"></div>
+                    </div>
+                    <div class="glass-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                            <h3>Interés en las visitas</h3>
+                            <select id="dash-interes-vendedor" onchange="renderInteresDashboard()" style="width:auto; margin:0; padding:6px 10px; font-size:0.8rem;">
+                                <option value="Todos">Todos los vendedores</option>
+                            </select>
+                        </div>
+                        <div id="dash-interes"></div>
+                    </div>
+                    <div class="glass-panel"><h3 style="margin-bottom:14px;">Visitas por vendedor</h3><div id="dash-vendedores"></div></div>
+                    <div class="glass-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                            <h3>Visitas por zona</h3>
+                            <select id="dash-zona-vendedor" onchange="renderZonaDashboard()" style="width:auto; margin:0; padding:6px 10px; font-size:0.8rem;">
+                                <option value="Todos">Todos los vendedores</option>
+                            </select>
+                        </div>
+                        <div id="dash-zonas"></div>
+                    </div>
+                    <div class="glass-panel"><h3 style="margin-bottom:14px;">Motivos de pérdida</h3><div id="dash-motivos"></div></div>
+                    <div class="glass-panel"><h3 style="margin-bottom:14px;">Pendientes · desglose</h3><div id="dash-pendientes"></div></div>
+                    <div class="glass-panel"><h3 style="margin-bottom:14px;">Visitas por horario de corte</h3><div id="dash-corte"></div></div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN PROSPECTOS -->
+            <section id="prospectos-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap: wrap; gap:10px;">
+                    <h2>BBDD PROSPECCIÓN</h2>
+                    <div style="display:flex; gap:10px;">
+                        <input type="file" id="import-excel" style="display:none" onchange="importarProspectosDesdeExcel(this)">
+                        <button id="btn-importar-excel" onclick="document.getElementById('import-excel').click()" class="btn-sec">📥 IMPORTAR EXCEL</button>
+                        <button onclick="vaciarProspectos()" class="btn-sec btn-danger">🗑️ VACIAR BASE</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <input type="text" id="busqueda-prospecto" placeholder="🔍 Buscar por nombre, zona o rubro..." oninput="renderProspectos()" style="flex:1; min-width:220px;">
+                    <select id="filtro-estado-prospecto" onchange="renderProspectos()" style="width:auto; min-width:160px;">
+                        <option value="Todos">Todos los estados</option>
+                        <option value="Nuevo">Nuevo</option>
+                        <option value="Contactado">Contactado</option>
+                        <option value="En negociación">En negociación</option>
+                        <option value="Cerrado">Cerrado</option>
+                    </select>
+                </div>
+                <div id="grid-prospectos" class="grid-prospectos"></div>
+            </section>
+
+            <!-- SECCIÓN RUTEO (ADMIN IVO) -->
+            <section id="ruteo-view" class="view-section">
+                <div class="ruteo-control-panel">
+                    <h3>📍 PANEL DE RUTEO IVO</h3>
+                    <div class="ruteo-grid-filtros" style="margin-top:15px;">
+                        <input type="text" id="r-search" placeholder="🔍 Empresa..." oninput="filtrarRuteo()">
+                        <select id="r-filter-zona" onchange="filtrarRuteo()">
+                            <option value="Todos">Todas las Zonas</option>
+                            <option value="Zona Oeste">Zona Oeste</option>
+                            <option value="Zona Norte">Zona Norte</option>
+                            <option value="Zona Sur">Zona Sur</option>
+                            <option value="CABA">CABA</option>
+                        </select>
+                        <select id="r-filter-rubro" onchange="filtrarRuteo()"><option value="Todos">Todos los Rubros</option></select>
+                        <select id="r-filter-ventas" onchange="filtrarRuteo()">
+                            <option value="Todos">Ventas</option>
+                            <option value="1 Millon">1 Millón</option>
+                            <option value="5 mil">Más de 5 mil</option>
+                        </select>
+                    </div>
+                    <div class="ruteo-action-bar">
+                        <div style="flex:1;">
+                            <label class="selector-label">1. FECHA DE RUTA</label>
+                            <input type="date" id="fecha-ruteo" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label class="selector-label">2. VENDEDOR</label>
+                            <select id="r-vendedor-select" style="margin-bottom:0;">
+                                <option value="Dante">Dante</option>
+                                <option value="Nahuel">Nahuel</option>
+                                <option value="Ivo">Ivo</option>
+                            </select>
+                        </div>
+                        <div style="flex:1.5; display:flex; gap:10px;">
+                            <button class="btn-calc" style="background:#25d366; margin-bottom:0; font-size:0.75rem;" onclick="dispararNotificacion('whatsapp', this)">WhatsApp</button>
+                            <button class="btn-calc" style="background:#ea4335; margin-bottom:0; font-size:0.75rem;" onclick="dispararNotificacion('email', this)">Email</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="r-tabla-container">
+                    <div class="r-item-row header"><div>Sel.</div><div>Empresa</div><div>Rubro</div><div>Zona</div><div>Localidad</div></div>
+                    <div id="r-lista-leads"></div>
+                </div>
+            </section>
+
+            <!-- REGISTRO DE VISITA (DISEÑO ORIGINAL) -->
+            <section id="visitas" class="view-section">
+                <div class="visitas-split">
+                    <div class="glass-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <h3>REGISTRO DE VISITA</h3>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input type="month" id="mes-reporte" title="Mes del reporte (vacío = histórico completo)" style="width:auto; margin:0; padding:8px 10px; font-size:0.8rem;">
+                                <button onclick="descargarExcelVisitas()" style="background:#22c55e; border:none; color:white; padding:9px 12px; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer; white-space:nowrap;">📊 EXCEL</button>
+                            </div>
+                        </div>
+                        <input id="v-nombre" placeholder="Nombre Empresa / Prospecto" style="margin-top:15px;">
+
+                        <label class="selector-label">Vendedor</label>
+                        <div class="selector-group" id="g-vend">
+                            <div class="btn-option" onclick="selectSingle('g-vend', this)" data-val="Dante">DANTE</div>
+                            <div class="btn-option" onclick="selectSingle('g-vend', this)" data-val="Nahuel">NAHUEL</div>
+                            <div class="btn-option" onclick="selectSingle('g-vend', this)" data-val="Ivo">IVO</div>
+                        </div>
+
+                        <label class="selector-label">¿Interesado?</label>
+                        <div class="selector-group" id="g-int">
+                            <div class="btn-option btn-si" onclick="selectSingle('g-int', this)" data-val="Si">SI</div>
+                            <div class="btn-option btn-neutro" onclick="selectSingle('g-int', this)" data-val="Neutro">NEUTRO</div>
+                            <div class="btn-option btn-no" onclick="selectSingle('g-int', this)" data-val="No">NO</div>
+                        </div>
+
+                        <label class="selector-label">Resultado *</label>
+                        <div class="selector-group" id="g-resultado-visita">
+                            <div class="btn-option btn-si" onclick="elegirResultadoVisita('Cerrado', this)" data-val="Cerrado">🏆 GANADO</div>
+                            <div class="btn-option btn-no" onclick="elegirResultadoVisita('Perdido', this)" data-val="Perdido">💔 PERDIDO</div>
+                            <div class="btn-option" onclick="elegirResultadoVisita('Pendiente', this)" data-val="Pendiente">⏳ PENDIENTE</div>
+                        </div>
+
+                        <label class="selector-label">Zona Principal</label>
+                        <div class="selector-group" id="g-zona-visita">
+                            <div class="btn-option" onclick="cambiarSubzonasVisita('Zona Oeste', this)" data-val="Zona Oeste">OESTE</div>
+                            <div class="btn-option" onclick="cambiarSubzonasVisita('Zona Norte', this)" data-val="Zona Norte">NORTE</div>
+                            <div class="btn-option" onclick="cambiarSubzonasVisita('Zona Sur', this)" data-val="Zona Sur">SUR</div>
+                            <div class="btn-option" onclick="cambiarSubzonasVisita('CABA', this)" data-val="CABA">CABA</div>
+                        </div>
+
+                        <div id="visita-localidades-cont" style="display:none; background: var(--surface-2); border: 1px solid var(--border); padding: 12px; border-radius: 9px; margin-bottom: 15px;">
+                            <label class="selector-label">Localidad / Partido</label>
+                            <div class="selector-group" id="g-localidad-visita"></div>
+                        </div>
+
+                        <label class="selector-label">Envíos Diarios (número)</label>
+                        <input type="number" id="v-envios" min="0" inputmode="numeric" placeholder="Ej: 35 envíos por día">
+                        <div style="height:6px;"></div>
+
+                        <label class="selector-label">¿Se cotizó?</label>
+                        <div class="selector-group" id="g-cotizado">
+                            <div class="btn-option btn-si" onclick="selectSingle('g-cotizado', this)" data-val="si">SÍ</div>
+                            <div class="btn-option btn-no" onclick="selectSingle('g-cotizado', this)" data-val="no">NO</div>
+                        </div>
+
+                        <label class="selector-label">Horario de Corte</label>
+                        <div class="selector-group" id="g-corte">
+                            <div class="btn-option" onclick="selectSingle('g-corte', this)" data-val="12:00 hs">12:00 hs</div>
+                            <div class="btn-option" onclick="selectSingle('g-corte', this)" data-val="13:00 hs">13:00 hs</div>
+                            <div class="btn-option" onclick="selectSingle('g-corte', this)" data-val="14:00 hs">14:00 hs</div>
+                            <div class="btn-option" onclick="selectSingle('g-corte', this)" data-val="15:00 hs">15:00 hs</div>
+                        </div>
+
+                        <textarea id="v-obs" placeholder="Observaciones detalladas de la visita..." rows="3"></textarea>
+                        <button id="btn-guardar-visita" class="btn-calc" onclick="guardarVisitaFormulario()">Guardar Reporte</button>
+                    </div>
+
+                    <div class="glass-panel" style="max-height: 85vh; overflow-y: auto;">
+                        <h3 style="margin-bottom:15px;">HISTORIAL DE VISITAS</h3>
+                        <div id="historial-lista"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MI AGENDA -->
+            <section id="agenda-view" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+                    <h2>📅 MI AGENDA DE VISITAS</h2>
+                    <input type="date" id="filtro-fecha-agenda" onchange="cargarAgendaVendedor()" style="width:auto;">
+                </div>
+                <button id="btn-activar-notificaciones" class="btn-sec" style="margin-bottom:15px; display:none;" onclick="activarNotificacionesUI()">🔔 Activar notificaciones de rutas nuevas</button>
+                <p id="nota-notificaciones-ios" style="display:none; font-size:0.7rem; color:var(--texto-muted); margin:-10px 0 15px;">📱 En iPhone: agregá esta app a tu pantalla de inicio primero (compartir → Agregar a inicio) para poder activarlas.</p>
+                <div id="lista-agenda"></div>
+            </section>
+
+            <!-- CLIENTES ACTIVOS -->
+            <section id="clientes" class="view-section">
+                <div id="grid-activos" class="grid-prospectos"></div>
+            </section>
+
+            <!-- RE-ATAQUES (recuperar clientes perdidos) -->
+            <section id="reataques-view" class="view-section">
+                <h2>⚔️ Re-Ataques</h2>
+                <p style="color:var(--texto-muted); font-size:0.85rem; margin:6px 0 4px;">
+                    Clientes que dijeron que no. Volvé con una estrategia y oferta superadora.
+                </p>
+                <p id="reataques-resumen" style="color:var(--brand); font-size:0.85rem; font-weight:700; margin-bottom:18px;"></p>
+                <div id="reataques-lista" class="grid-prospectos"></div>
+            </section>
+
+            <!-- FACTURACIÓN (estimada) -->
+            <section id="facturacion-view" class="view-section">
+                <h2>💰 Facturación</h2>
+                <p style="color:var(--texto-muted); font-size:0.85rem; margin:6px 0 16px;">
+                    Estimación por los clientes ganados: precio × envíos/día ganados × días hábiles.
+                </p>
+                <div class="fact-controles">
+                    <div class="fact-campo">
+                        <label class="selector-label">Mes</label>
+                        <input type="month" id="fact-mes" onchange="recalcularFacturacion()">
+                    </div>
+                    <button class="btn-sec" onclick="factHistorico()" style="align-self:flex-end;">Histórico</button>
+                    <div class="fact-campo">
+                        <label class="selector-label">Precio promedio por envío ($)</label>
+                        <div class="fact-precio-row">
+                            <input type="number" id="fact-precio" min="0" inputmode="numeric" placeholder="Ej: 3500" oninput="recalcularFacturacion()" readonly>
+                            <button type="button" class="btn-sec fact-precio-editar" onclick="habilitarEdicionPrecio()" title="Editar precio">✏️</button>
+                        </div>
+                    </div>
+                    <div class="fact-campo">
+                        <label class="selector-label">Días hábiles del mes</label>
+                        <input type="number" id="fact-dias" min="0" inputmode="numeric" oninput="recalcularFacturacion()">
+                    </div>
+                </div>
+
+                <div class="fact-resultado">
+                    <span class="fact-resultado-label">Facturación estimada</span>
+                    <span class="fact-monto" id="fact-monto">$0</span>
+                    <span class="fact-periodo" id="fact-periodo"></span>
+                </div>
+
+                <div id="fact-desglose" class="dash-numeros"></div>
+
+                <div id="fact-historico"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL ZONA (visitas de una zona — drill-down del dashboard) -->
+    <div id="modal-zona" class="modal">
+        <div class="modal-content">
+            <h2 id="det-zona-titulo" style="color:var(--brand); margin-bottom:4px;"></h2>
+            <p id="det-zona-sub" style="color:var(--texto-muted); font-size:0.8rem; margin-bottom:16px;"></p>
+            <div id="det-zona-filtro" style="display:none; margin-bottom:14px;"></div>
+            <div id="det-zona-lista" style="max-height:60vh; overflow-y:auto;"></div>
+            <button onclick="cerrarModalZona()" class="btn-calc btn-sec" style="margin-top:16px;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- MODAL PROSPECTO (DETALLE / EDICIÓN) -->
+    <div id="modal-prospecto" class="modal">
+        <div class="modal-content">
+            <h2 id="det-p-empresa" style="color:var(--azul-vibrante); margin-bottom:15px;"></h2>
+            <div id="det-p-body"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                <button id="btn-edit-p" class="btn-calc" style="background:#6366f1;" onclick="activarEdicionP()">✏️ Editar</button>
+                <button id="btn-save-p" class="btn-calc" style="background:var(--verde-drive); display:none;" onclick="guardarEdicionP()">💾 Guardar</button>
+                <button class="btn-calc btn-danger" onclick="eliminarP()">🗑️ Borrar</button>
+            </div>
+            <button onclick="cerrarModalP()" class="btn-calc btn-sec" style="margin-top:10px;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- MODAL VISITA (DETALLE / EDICIÓN) -->
+    <div id="modal-visita" class="modal">
+        <div class="modal-content">
+            <h2 id="det-v-titulo" style="color:var(--brand); margin-bottom:15px;"></h2>
+            <div id="det-v-body"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                <button id="btn-edit-v" class="btn-calc" style="background:#6366f1;" onclick="activarEdicionVisita()">✏️ Editar</button>
+                <button id="btn-save-v" class="btn-calc" style="background:var(--verde-drive); display:none;" onclick="guardarEdicionVisita()">💾 Guardar</button>
+                <button class="btn-calc btn-danger" onclick="eliminarVisitaActiva()">🗑️ Borrar</button>
+            </div>
+            <button onclick="cerrarModalVisita()" class="btn-calc btn-sec" style="margin-top:10px;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- LÓGICA DE LA APP (módulos ES) -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
